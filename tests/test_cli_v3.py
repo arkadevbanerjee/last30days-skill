@@ -2,6 +2,7 @@
 import contextlib
 import json
 import io
+import os
 import shutil
 import tempfile
 import subprocess
@@ -63,7 +64,7 @@ class CliV3Tests(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
         payload = json.loads(result.stdout)
-        self.assertEqual("1.2", payload["schema_version"])
+        self.assertEqual("1.4", payload["schema_version"])
         self.assertEqual("test topic", payload["query"])
         self.assertIn("results", payload)
         self.assertIn("clusters", payload)
@@ -131,7 +132,7 @@ class CliV3Tests(unittest.TestCase):
         )
         self.assertIn("threads", available)
 
-    def test_explicit_perplexity_search_uses_openrouter_key_without_include_sources(self):
+    def test_explicit_perplexity_search_uses_openrouter_fallback(self):
         available = cli.pipeline.available_sources(
             {"OPENROUTER_API_KEY": "test-key", "INCLUDE_SOURCES": ""},
             requested_sources=["perplexity"],
@@ -179,6 +180,38 @@ class CliV3Tests(unittest.TestCase):
             )
         self.assertIn("LAST30DAYS_DEFAULT_SEARCH", str(exc.exception))
 
+    def test_deep_research_preserves_default_source_selection(self):
+        self.assertIsNone(cli.add_deep_research_source(None))
+
+    def test_deep_research_extends_an_explicit_source_selection(self):
+        self.assertEqual(
+            ["reddit", "perplexity"],
+            cli.add_deep_research_source(["reddit"]),
+        )
+        self.assertEqual(
+            ["reddit", "perplexity"],
+            cli.add_deep_research_source(["reddit", "perplexity"]),
+        )
+
+    def test_deep_research_enables_exact_include_token(self):
+        config = {"INCLUDE_SOURCES": "notperplexity,reddit"}
+
+        cli.enable_deep_research_source(config)
+
+        self.assertEqual(
+            ["notperplexity", "reddit", "perplexity"],
+            config["INCLUDE_SOURCES"].split(","),
+        )
+
+    def test_deep_research_rejects_exact_exclusion(self):
+        config = {"EXCLUDE_SOURCES": "reddit,Perplexity"}
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "conflicts with EXCLUDE_SOURCES=perplexity",
+        ):
+            cli.enable_deep_research_source(config)
+
     def test_build_parser_accepts_days_alias_and_preserves_topic_tokens(self):
         parser = cli.build_parser()
         args, extra = parser.parse_known_args(["--days", "7", "biosecurity", "ai", "agents"])
@@ -194,9 +227,309 @@ class CliV3Tests(unittest.TestCase):
         self.assertEqual("keyless", args.web_backend)
         self.assertEqual([], extra)
 
+    def test_deep_research_help_keeps_openrouter_fallback(self):
+        parser = cli.build_parser()
+        action = next(
+            candidate
+            for candidate in parser._actions
+            if "--deep-research" in candidate.option_strings
+        )
+        self.assertIn("PERPLEXITY_API_KEY", action.help)
+        self.assertIn("OPENROUTER_API_KEY", action.help)
+        self.assertIn("cannot be combined with competitor or vs-mode", action.help)
+
+    def test_deep_research_rejects_modes_without_a_positional_topic(self):
+        for argv in (
+            ["last30days.py", "--discover", "agents", "--deep-research"],
+            ["last30days.py", "--drill", "cluster-1", "--deep-research"],
+        ):
+            with self.subTest(argv=argv), mock.patch.object(
+                cli.env,
+                "get_config",
+                return_value={},
+            ), mock.patch.object(
+                cli,
+                "_run_discover",
+            ) as discover_mock, mock.patch.object(
+                cli,
+                "_run_drill",
+            ) as drill_mock, mock.patch.dict(
+                os.environ,
+                {"LAST30DAYS_SKIP_PREFLIGHT": "1"},
+                clear=False,
+            ), mock.patch.object(sys, "argv", argv):
+                stderr = io.StringIO()
+                with redirect_stderr(stderr):
+                    rc = cli.main()
+
+            self.assertEqual(2, rc)
+            discover_mock.assert_not_called()
+            drill_mock.assert_not_called()
+            self.assertIn("requires a normal positional topic", stderr.getvalue())
+
+    def test_deep_research_rejects_competitor_fanout_before_pipeline_run(self):
+        diag = {
+            "available_sources": ["perplexity"],
+            "providers": {"google": False, "openai": False, "xai": False},
+            "x_backend": None,
+            "bird_installed": True,
+            "bird_authenticated": False,
+            "bird_username": None,
+            "native_web_backend": None,
+        }
+        with mock.patch.object(
+            cli.env,
+            "get_config",
+            return_value={"PERPLEXITY_API_KEY": "pplx-test"},
+        ), mock.patch.object(
+            cli.pipeline,
+            "diagnose",
+            return_value=diag,
+        ) as diagnose_mock, mock.patch.object(
+            cli.pipeline,
+            "run",
+        ) as run_mock, mock.patch.object(
+            cli.ui,
+            "ProgressDisplay",
+            return_value=mock.Mock(),
+        ), mock.patch.object(
+            sys,
+            "argv",
+            [
+                "last30days.py",
+                "Alpha",
+                "vs",
+                "Beta",
+                "--mock",
+                "--deep-research",
+            ],
+        ):
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                rc = cli.main()
+
+        self.assertEqual(2, rc)
+        diagnose_mock.assert_not_called()
+        run_mock.assert_not_called()
+        self.assertIn(
+            "one paid Deep Research run per user action",
+            stderr.getvalue(),
+        )
+
+    def test_openrouter_deep_research_bypasses_hosted_and_adds_source(self):
+        report = self.make_report(topic="why AI safety matters")
+        diag = {
+            "available_sources": ["reddit", "perplexity"],
+            "providers": {"google": False, "openai": False, "xai": False},
+            "x_backend": None,
+            "bird_installed": True,
+            "bird_authenticated": False,
+            "bird_username": None,
+            "native_web_backend": None,
+        }
+        with mock.patch.object(
+            cli.env,
+            "get_config",
+            return_value={"OPENROUTER_API_KEY": "openrouter-test"},
+        ), mock.patch.object(
+            cli.env,
+            "read_secret_env",
+            return_value="hosted-test-key",
+        ), mock.patch.object(
+            cli.pipeline,
+            "diagnose",
+            return_value=diag,
+        ), mock.patch.object(
+            cli.pipeline,
+            "run",
+            return_value=report,
+        ) as run_mock, mock.patch(
+            "lib.hosted.run_hosted",
+        ) as hosted_mock, mock.patch.object(
+            cli.ui,
+            "ProgressDisplay",
+            return_value=mock.Mock(),
+        ), mock.patch.object(
+            cli,
+            "emit_output",
+            return_value="# rendered",
+        ), mock.patch.dict(
+            os.environ,
+            {
+                "LAST30DAYS_API_BASE": "https://hosted.example.test",
+                "LAST30DAYS_SKIP_PREFLIGHT": "1",
+            },
+            clear=False,
+        ), mock.patch.object(
+            sys,
+            "argv",
+            [
+                "last30days.py",
+                "why",
+                "AI",
+                "safety",
+                "matters",
+                "--deep-research",
+                "--search",
+                "reddit",
+            ],
+        ):
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                rc = cli.main()
+
+        self.assertEqual(0, rc)
+        hosted_mock.assert_not_called()
+        requested_sources = run_mock.call_args.kwargs["requested_sources"]
+        self.assertEqual(["reddit", "perplexity"], requested_sources)
+        self.assertTrue(run_mock.call_args.kwargs["config"]["_deep_research"])
+
+    def _run_perplexity_search_type_cli(self, argv_extra, config, *, hosted):
+        report = self.make_report(topic="rust releases")
+        diag = {
+            "available_sources": ["reddit"],
+            "providers": {"google": False, "openai": False, "xai": False},
+            "x_backend": None,
+            "bird_installed": True,
+            "bird_authenticated": False,
+            "bird_username": None,
+            "native_web_backend": None,
+        }
+        environ = {"LAST30DAYS_SKIP_PREFLIGHT": "1"}
+        if hosted:
+            environ["LAST30DAYS_API_BASE"] = "https://hosted.example.test"
+        stderr = io.StringIO()
+        with mock.patch.object(
+            cli.env, "get_config", return_value=dict(config),
+        ), mock.patch.object(
+            cli.env, "read_secret_env",
+            return_value="hosted-test-key" if hosted else None,
+        ), mock.patch.object(
+            cli.pipeline, "diagnose", return_value=diag,
+        ), mock.patch.object(
+            cli.pipeline, "run", return_value=report,
+        ) as run_mock, mock.patch(
+            "lib.hosted.run_hosted", return_value=0,
+        ) as hosted_mock, mock.patch(
+            "lib.resolve.auto_resolve", return_value={},
+        ), mock.patch.object(
+            cli.ui, "ProgressDisplay", return_value=mock.Mock(),
+        ), mock.patch.object(
+            cli, "emit_output", return_value="# rendered",
+        ), mock.patch.dict(
+            os.environ, environ, clear=False,
+        ), mock.patch.object(
+            sys, "argv", ["last30days.py", "rust", "releases", *argv_extra],
+        ):
+            if not hosted:
+                os.environ.pop("LAST30DAYS_API_BASE", None)
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                rc = cli.main()
+        return rc, run_mock, hosted_mock, stderr.getvalue()
+
+    def test_perplexity_search_type_flag_bypasses_hosted_with_one_notice(self):
+        rc, run_mock, hosted_mock, err = self._run_perplexity_search_type_cli(
+            ["--perplexity-search-type", "fast"],
+            {"PERPLEXITY_API_KEY": "pplx-test"},
+            hosted=True,
+        )
+
+        self.assertEqual(0, rc)
+        hosted_mock.assert_not_called()
+        run_mock.assert_called_once()
+        config = run_mock.call_args.kwargs["config"]
+        self.assertEqual("fast", config["LAST30DAYS_PERPLEXITY_SEARCH_TYPE"])
+        self.assertEqual(1, err.count("--perplexity-search-type"))
+        self.assertIn("bypassing the hosted backend", err)
+        self.assertNotIn("does not apply LAST30DAYS_PERPLEXITY_SEARCH_TYPE", err)
+
+    def test_perplexity_search_type_flag_without_direct_key_stays_hosted(self):
+        rc, run_mock, hosted_mock, err = self._run_perplexity_search_type_cli(
+            ["--perplexity-search-type", "fast"],
+            {"OPENROUTER_API_KEY": "or-test"},
+            hosted=True,
+        )
+
+        self.assertEqual(0, rc)
+        hosted_mock.assert_called_once()
+        run_mock.assert_not_called()
+        self.assertEqual(1, err.count("no direct PERPLEXITY_API_KEY is configured"))
+        self.assertNotIn("bypassing the hosted backend", err)
+
+    def test_search_type_flag_without_direct_key_matches_no_flag_routing(self):
+        # Without a direct key the flag cannot apply, so hosted routing and its
+        # local-only option checks must match a run without the flag.
+        for extra in (["--x-posts", "https://x.com/a/status/1"], ["--emit=json", "--json-profile=agent"]):
+            plain_rc, plain_run, plain_hosted, _ = self._run_perplexity_search_type_cli(
+                extra, {"OPENROUTER_API_KEY": "or-test"}, hosted=True,
+            )
+            flag_rc, flag_run, flag_hosted, _ = self._run_perplexity_search_type_cli(
+                ["--perplexity-search-type", "fast", *extra],
+                {"OPENROUTER_API_KEY": "or-test"},
+                hosted=True,
+            )
+            self.assertEqual(plain_rc, flag_rc, extra)
+            self.assertEqual(plain_run.call_count, flag_run.call_count, extra)
+            self.assertEqual(plain_hosted.call_count, flag_hosted.call_count, extra)
+
+    def test_env_only_perplexity_search_type_stays_hosted_with_one_note(self):
+        rc, run_mock, hosted_mock, err = self._run_perplexity_search_type_cli(
+            [], {"LAST30DAYS_PERPLEXITY_SEARCH_TYPE": "fast"}, hosted=True,
+        )
+
+        self.assertEqual(0, rc)
+        hosted_mock.assert_called_once()
+        run_mock.assert_not_called()
+        self.assertEqual(
+            1,
+            err.count("hosted backend does not apply LAST30DAYS_PERPLEXITY_SEARCH_TYPE"),
+        )
+        self.assertNotIn("bypassing the hosted backend", err)
+
+    def test_hosted_without_perplexity_search_type_is_unchanged(self):
+        rc, run_mock, hosted_mock, err = self._run_perplexity_search_type_cli(
+            [], {}, hosted=True,
+        )
+
+        self.assertEqual(0, rc)
+        hosted_mock.assert_called_once()
+        run_mock.assert_not_called()
+        self.assertNotIn("search type", err.lower())
+        self.assertNotIn("SEARCH_TYPE", err)
+
+    def test_perplexity_search_type_flag_does_not_enable_perplexity(self):
+        _, baseline_run, _, _ = self._run_perplexity_search_type_cli(
+            [], {"PERPLEXITY_API_KEY": "pplx-test"}, hosted=False,
+        )
+        rc, flagged_run, _, err = self._run_perplexity_search_type_cli(
+            ["--perplexity-search-type", "fast"],
+            {"PERPLEXITY_API_KEY": "pplx-test"},
+            hosted=False,
+        )
+
+        self.assertEqual(0, rc)
+        self.assertEqual(
+            baseline_run.call_args.kwargs["requested_sources"],
+            flagged_run.call_args.kwargs["requested_sources"],
+        )
+        self.assertNotIn("perplexity", flagged_run.call_args.kwargs["requested_sources"] or [])
+        config = flagged_run.call_args.kwargs["config"]
+        self.assertEqual("fast", config["LAST30DAYS_PERPLEXITY_SEARCH_TYPE"])
+        self.assertNotIn("INCLUDE_SOURCES", config)
+        self.assertNotIn("bypassing the hosted backend", err)
+
+    def test_perplexity_search_type_flag_overrides_env_value(self):
+        _, run_mock, _, _ = self._run_perplexity_search_type_cli(
+            ["--perplexity-search-type", "web"],
+            {"LAST30DAYS_PERPLEXITY_SEARCH_TYPE": "fast"},
+            hosted=False,
+        )
+
+        config = run_mock.call_args.kwargs["config"]
+        self.assertEqual("web", config["LAST30DAYS_PERPLEXITY_SEARCH_TYPE"])
+
     def test_build_parser_still_accepts_other_web_backend_values(self):
         parser = cli.build_parser()
-        for value in ("auto", "brave", "exa", "serper", "parallel", "none"):
+        for value in ("auto", "brave", "exa", "serper", "parallel", "parallel-mcp", "none"):
             args, extra = parser.parse_known_args(["--web-backend", value, "biosecurity"])
             self.assertEqual(value, args.web_backend)
             self.assertEqual([], extra)
@@ -300,9 +633,9 @@ class CliV3Tests(unittest.TestCase):
     def test_ensure_supported_python_allows_supported_interpreter(self):
         cli.ensure_supported_python((3, 12, 0))
 
-    def test_missing_sources_for_promo_prefers_reddit_x_then_web(self):
+    def test_missing_sources_for_promo_treats_x_as_optional(self):
         self.assertEqual(
-            "both",
+            "reddit",
             cli._missing_sources_for_promo({"available_sources": ["youtube"]}),
         )
         self.assertEqual(
@@ -315,6 +648,31 @@ class CliV3Tests(unittest.TestCase):
             cli._missing_sources_for_promo(
                 {"available_sources": ["reddit", "x", "grounding"], "native_web_backend": "brave"}
             ),
+        )
+
+    def test_optional_x_omission_is_post_result_copy_for_default_runs(self):
+        note = cli._optional_x_omission_text(
+            {"available_sources": ["reddit", "youtube", "grounding"]},
+            None,
+        )
+        self.assertEqual(
+            "Optional source omitted: X/Twitter was not enabled; research "
+            "continued with the available sources.",
+            note,
+        )
+
+    def test_optional_x_omission_is_suppressed_when_x_active_or_search_explicit(self):
+        self.assertIsNone(
+            cli._optional_x_omission_text(
+                {"available_sources": ["reddit", "x", "youtube"]},
+                None,
+            )
+        )
+        self.assertIsNone(
+            cli._optional_x_omission_text(
+                {"available_sources": ["reddit", "youtube"]},
+                ["reddit", "youtube"],
+            )
         )
         # ...or suppressed entirely on a native-search host.
         self.assertIsNone(
@@ -348,6 +706,34 @@ class CliV3Tests(unittest.TestCase):
             self.assertEqual(".json", path.suffix)
             payload = json.loads(path.read_text())
             self.assertEqual("OpenClaw vs NanoClaw", payload["query"])
+
+    def test_compact_emit_saves_full_artifact_not_compact_render(self):
+        """A --emit=compact --save-dir run must save the complete debug
+        artifact (all clusters plus per-source items), not the compact stdout
+        render. Saving the compact render made most collected evidence
+        unrecoverable from the raw file (#923)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "skills/last30days/scripts/last30days.py",
+                    "compact save probe",
+                    "--mock",
+                    "--emit=compact",
+                    f"--save-dir={tmp}",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            saved = list(Path(tmp).glob("*.md"))
+            self.assertEqual(1, len(saved), saved)
+            content = saved[0].read_text(encoding="utf-8")
+            self.assertIn("## All Items by Source", content)
+            self.assertNotIn("## All Items by Source", result.stdout)
 
     def test_save_output_uses_unique_dated_fallback(self):
         report = self.make_report()
@@ -568,7 +954,7 @@ class CliV3Tests(unittest.TestCase):
             source_counts={"grounding": 0},
             display_sources=["grounding"],
         )
-        fake_progress.show_promo.assert_called_once_with("both", diag=diag)
+        fake_progress.show_promo.assert_called_once_with("reddit", diag=diag)
         self.assertIn("# rendered", stdout.getvalue())
 
     def test_main_writes_rendered_output_to_explicit_file(self):

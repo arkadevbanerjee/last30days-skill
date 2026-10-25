@@ -14,6 +14,10 @@
   <a href="https://trendshift.io/repositories/21997" target="_blank">
     <img src="https://trendshift.io/api/badge/repositories/21997" alt="mvanhorn/last30days-skill | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
   </a>
+  <br/>
+  <a href="https://github.com/mvanhorn/last30days-skill/actions/workflows/validate.yml">
+    <img src="https://github.com/mvanhorn/last30days-skill/actions/workflows/validate.yml/badge.svg" alt="Validate status" />
+  </a>
 </p>
 
 **Eine von einem KI-Agenten gesteuerte Suchmaschine, die nach Upvotes, Likes und echtem Geld gewichtet – nicht nach Redaktionen.**
@@ -72,19 +76,28 @@ Wenn du dich mit einem CEO triffst: Hast du alle Tweets und YouTube-Transkripte 
 | **Hacker News** | Der Konsens der Entwickler. 825 Punkte, 899 Kommentare. Wo technische Leute wirklich streiten. |
 | **Polymarket** | Keine Meinungen. Quoten. Gedeckt durch echtes Geld. 96 % Wahrscheinlichkeit bei Albumverkäufen. 4 % bei einer Übernahme. |
 | **GitHub** | Für Personen: PR-Tempo, Top-Repos nach Sternen, Release Notes. Für Themen: Issues und Discussions. |
-| **Digg** | Kuratierte Story-Cluster aus Diggs AI-1000-Leaderboard (rund 1000 KI-Accounts mit hohem Signal auf X), mit zuordenbaren Inline-Zitaten und ganz ohne X-Authentifizierung. Wird automatisch aktiv, sobald `digg-pp-cli` im PATH liegt. |
+| **Digg** | Story-Cluster aus Diggs Rubriken AI und Tech, mit zuordenbaren Inline-Zitaten von X und ganz ohne X-Authentifizierung. Wird automatisch aktiv, sobald `digg-pp-cli` im PATH liegt. |
 | **arXiv** | Die Fachartikel hinter dem Hype. Neue Forschung im Zeitfenster, kostenlos, ohne API-Schlüssel. Wird automatisch aktiv, sobald `arxiv-pp-cli` im PATH liegt (das Erst-Setup installiert es). |
 | **Techmeme** | Die redaktionelle Ebene der Tech-News, begrenzt auf dein 30-Tage-Fenster. Kostenlos, ohne API-Schlüssel. Wird automatisch aktiv, sobald `techmeme-pp-cli` im PATH liegt (das Erst-Setup installiert es). |
 | **LinkedIn** | Das berufliche Signal. Beiträge und Artikel, wobei Artikel als starkes Signal gewichtet werden. |
+| **Meta Ads** | Wofür eine Marke bezahlt. Diesen Monat gestartete Meta-Werbemittel mit Anzeigentext, Gutscheincodes und Transkripten. |
 | **StockTwits** | Die Stimmung der Trader. Aktiviert sich automatisch, wenn dein Thema ein Ticker oder eine Kryptowährung ist. |
 | **Threads** | Die Textebene nach Twitter. Gespräche von Creators und Marken. |
 | **Pinterest** | Visuelle Entdeckung. Pins, gespeicherte Beiträge und Kommentare zu Produkten und Ideen. |
 | **Xiaohongshu (RED)** | Chinesische Signale zu Lifestyle, Produkten und Creators. Wird ausdrücklich mit `--search xhs` angefordert, wenn lokal ein eingeloggtes x-mcp-Browser-Plugin oder ein `xiaohongshu-mcp`-Dienst läuft. |
 | **Bluesky** | Die dezentrale soziale Ebene. AT-Protocol-Beiträge aus der Abwanderung nach Twitter. |
-| **Perplexity** | Belegte Sonar-Synthese, Rohtreffer der Search API und Deep Research. |
+| **Perplexity** | Gesteuerte Agent-API-Synthese, OpenRouter-Sonar-Fallback, Rohtreffer der Search API und explizite Deep Research. |
+| **DEV Community (dev.to)** | Entwicklerartikel und Top-Kommentare über die öffentliche API ohne Schlüssel. Aktivierung mit `--devto-tags`, `--search devto` oder `INCLUDE_SOURCES=devto`. |
+| **Truth Social** | Beitragssuche mit `TRUTHSOCIAL_TOKEN`; nach Authentifizierung verfügbar. |
+| **Telegram** | Öffentliche Beiträge aus benannten Kanälen. Optional; benötigt `SCRAPECREATORS_API_KEY` und eine Kanalliste. Keine Suche nach neuen Kanälen über Stichwörter. |
+| **Trustpilot** | TrustScore des Unternehmens, Anzahl der Bewertungen und eine KI-Zusammenfassung des Kundenfeedbacks. Optional; benötigt `trustpilot-pp-cli` im PATH und eine nutzbare Sitzung. |
+| **Amazon** | Produktbewertungen, Preise und Kundenrezensionen. Optional; benötigt eine authentifizierte `brightdata`-CLI und verbraucht dein Bright-Data-Guthaben. |
+| **DripStack** | Finanznewsletter und Analystenberichte über eine öffentliche API ohne Schlüssel. Aktivierung mit `--search dripstack` oder `INCLUDE_SOURCES=dripstack`. |
+| **Jobs / Karriereseiten** | Öffentliche Stellenanzeigen als Hinweise auf Unternehmensschwerpunkte. Auswahl mit `--hiring-signals`, `--search jobs` oder im Rechercheplan. |
+| **Lokaler Korpus** | Deine lokalen Markdown- und Textdateien sowie PDFs, wenn `pdftotext` im PATH ist. Aktivierung mit `--corpus` oder `LAST30DAYS_CORPUS_DIRS`. |
 | **Web** | Die redaktionelle Berichterstattung, die Blog-Vergleiche. Ein Signal von vielen, nicht das einzige. |
 
-Die Community steuert laufend weitere bei. Truth Social und andere Nischenquellen stecken bereits in der Engine, weitere folgen.
+Bitte `/last30days`, die benötigten Quellen einzubeziehen. Ihre Verfügbarkeit hängt von Zugangsdaten, installierten Werkzeugen, dem Thema und der ausdrücklichen Aktivierung ab. Details findest du unter [Voraussetzungen der Quellen](CONFIGURATION.md#source-requirements).
 
 Ein Reddit-Thread mit 1.500 Upvotes ist ein stärkeres Signal als ein Blogbeitrag, den niemand gelesen hat. Ein TikTok mit 3,6 Millionen Aufrufen sagt mehr darüber aus, was kulturell relevant ist, als jede Pressemitteilung. Polymarket-Quoten mit 66.000 $ Handelsvolumen dahinter lassen sich schwerer wegdiskutieren als die Vermutung eines Kommentators.
 
@@ -96,7 +109,7 @@ Die Synthese sortiert nach dem, womit echte Menschen tatsächlich interagiert ha
 
 **Um Hiring-Signale zu lesen.** `/last30days Listen Labs --hiring-signals` – aktuelle Stellenanzeigen und Karriereseiten werden zu zitierten Belegen für Schwerpunktverschiebungen: Einstellungen in Enterprise Security, Customer Success, Infrastruktur oder Produktausbau. Der Bericht sagt, was das Hiring zu signalisieren scheint, nicht was die Roadmap liefern wird.
 
-**Um ein Thema vor seinem Höhepunkt zu finden.** Frag `/last30days what's exploding in AI agents?`, und die Skill wechselt in den Discovery-Modus: Die Engine durchkämmt Reddit-Kategorielisten, die Front- und Best-Stories von Hacker News, Diggs AI-1000-Feed und X, sofern du authentifiziert bist. Dein Agent bewertet die Vorschläge (Namen, Müllfilterung, inhaltliche Relevanz) und schreibt Podcast- und X-Artikel-Ansätze. Am Ende bekommst du 5 bis 10 nach Velocity sortierte Themen. Jedes Ergebnis enthält quellenübergreifende Zahlen, ein Momentum-Label und einen startklaren Folgebefehl `/last30days "<topic>"`.
+**Um ein Thema vor seinem Höhepunkt zu finden.** Frag `/last30days what's exploding in AI agents?`, und die Skill wechselt in den Discovery-Modus: Die Engine durchkämmt Reddit-Kategorielisten, die Front- und Best-Stories von Hacker News, Diggs AI- und Tech-Feeds und X, sofern du authentifiziert bist. Dein Agent bewertet die Vorschläge (Namen, Müllfilterung, inhaltliche Relevanz) und schreibt Podcast- und X-Artikel-Ansätze. Am Ende bekommst du 5 bis 10 nach Velocity sortierte Themen. Jedes Ergebnis enthält quellenübergreifende Zahlen, ein Momentum-Label und einen startklaren Folgebefehl `/last30days "<topic>"`.
 
 **Wenn etwas erscheint.** `/last30days Kanye West` – Großbritannien hat sein Visum blockiert, das Wireless Festival wurde abgesagt, die Sponsoren sind abgesprungen. Aber BULLY stieg auf Platz 2 der Billboard-Charts ein. Fantano kam aus seinem „Yay sabbatical“ zurück, um es zu rezensieren (653.000 Aufrufe). Beim SoFi Homecoming holte er Lauryn Hill und Travis Scott für 44 Songs auf die Bühne. Polymarket: „Wird Kanye wieder twittern?“ 86 % Ja. 23 Reddit-Threads, 17 YouTube-Videos, 86.000 Upvotes.
 
@@ -110,47 +123,9 @@ Die Synthese sortiert nach dem, womit echte Menschen tatsächlich interagiert ha
 
 ## Was neu ist
 
-Seit der Ankündigung von v3.3 im Mai und mit Stand v3.11.1 (Juli 2026): 175 gemergte PRs – 122 davon von 52 Beitragenden aus der Community – verteilt auf 15 Releases. Das ist gelandet.
+Die [neueste Veröffentlichung](https://github.com/mvanhorn/last30days-skill/releases/latest) zeigt die aktuell veröffentlichte Version; [CHANGELOG.md](CHANGELOG.md) enthält die Änderungen je Version. Noch nicht veröffentlichte Änderungen auf dem Standardbranch stehen in [changelog.d/](changelog.d/).
 
-### Erstklassig auf OpenAI Codex
-
-/last30days ist jetzt ein natives Codex-Plugin mit geführtem Setup – keine Portierung, sondern ein vollwertiger Bürger. Renderer-bewusste Zitate sorgen dafür, dass die Codex-Ausgabe sich wie ein Briefing liest und nicht wie eine URL-Suppe (#694), und dieselbe Engine läuft auf Claude Code, Cursor, Copilot, Gemini CLI, Claude Desktop, OpenClaw und 50+ Agent-Skills-Hosts. Codex-Plugin-Manifest von [@rfoust](https://github.com/rfoust) (#686), Codex-Auth-Fix von [@tmchow](https://github.com/tmchow) (#698).
-
-### arXiv, Techmeme und Digg – kostenlos, ohne API-Schlüssel
-
-arXiv liefert die Fachartikel hinter dem Hype, Techmeme die redaktionelle Tech-News-Ebene – kostenlos, ohne einen einzigen Schlüssel, und das Erst-Setup installiert ihre CLIs, sodass sie sich von selbst aktivieren (#709). Diggs AI-1000-Story-Cluster kommen genauso ohne X-Authentifizierung an: Das Setup installiert dir die kostenlose Digg-CLI (#590). Trustpilot ist optional zuschaltbar für Recherchen zu Consumer-Marken.
-
-### Reddit gratis, mit echten Scores und Top-Kommentaren
-
-Reddits öffentliche .json-API ist gestorben; der kostenlose Weg kam stärker zurück. Schlüsselloses RSS plus Shreddit-Scraping (#457), gezielte Subreddit-Suche mit echten Upvote-Zahlen über arctic-shift (#696) und eine Relevanzschwelle, damit ein viraler Off-Topic-Beitrag dein Briefing nicht kapert (#488, danke [@rzachsmith](https://github.com/rzachsmith)). Kein API-Schlüssel. Echte Scores. Top-Kommentare inklusive.
-
-### Die besten Kommentare in jedem Briefing
-
-Kommentare sind jetzt eine quellenübergreifend standardmäßig aktive Ebene: Instagram-Kommentare mit rangbasierter Vielfalt, damit fünf zugespitzte Meinungen nicht alle aus einem einzigen Beitrag stammen (#751), YouTube-Kommentare plus ein Transkript-Backup über ScrapeCreators, falls yt-dlp scheitert (#637), und von der Community hochgevotete Kommentare, die in die Best-Takes-Wertung einfließen, damit die witzigsten Zeilen die Bewertung überleben (#592, #608).
-
-### Ein einziger doctor-Befehl
-
-Bitte um einen Health-Check: doctor prüft jede Quelle und verschreibt dann die genauen Korrekturen – welcher Schlüssel fehlt, welche CLI nicht im PATH liegt, welches Cookie abgelaufen ist (#753). Kein Rätselraten mehr, warum X so wenig geliefert hat.
-
-### Die X-Suche, neu gebaut
-
-Die X-Pipeline wurde von Grund auf überarbeitet: FROM- und ABOUT-Lanes, damit sowohl die eigenen Beiträge einer Person als auch das Gespräch über sie einsortiert werden (#610), personenbezogene Auflösung mehrdeutiger Unterabfragen (#611), Verifizierung der Urheberschaft aus erster Hand samt Ranking nach Interaktionssignalen (#613) und eine einzige X-Quelle mit automatischem Backend-Failover (#622). Dazu ein ehrliches `--diagnose`, das die Authentifizierung wirklich prüft (#609).
-
-### Weitere Quellen sind dazugekommen
-
-LinkedIn über ScrapeCreators, mit Artikeln als starkem Signal ([@ravstr](https://github.com/ravstr), #702). StockTwits aktiviert sich automatisch bei Ticker- und Krypto-Themen ([@wtiwana](https://github.com/wtiwana), #658). Perplexity hat direkte API-Modi und asynchrone Deep Research dazubekommen ([@sk-holmes](https://github.com/sk-holmes), #629).
-
-### Von der Community gehärtet
-
-Die Sicherheitswelle war fast vollständig Community-Arbeit: Fixes für Stored XSS im HTML-Renderer ([@iliaal](https://github.com/iliaal), [@aaronjmars](https://github.com/aaronjmars)), abgesicherte temporäre Cookie-Dateien, eine gegen Supply-Chain-Angriffe gehärtete CI mit OpenSSF Scorecard und Build-Provenance-Attestierung ([@shaanmajid](https://github.com/shaanmajid), [@hammadxcm](https://github.com/hammadxcm), [@aniruddh909](https://github.com/aniruddh909)), Semgrep- und OSV-Scanner-Scans plus ein Dependency-Review-Gate für jeden PR ([@23241a6749](https://github.com/23241a6749)), eine Mindestgrenze für die Testabdeckung, eingeführt bei 60 % und inzwischen auf 84 % angehoben ([@gourab5139014](https://github.com/gourab5139014)), und ein Hermes-Sicherheitsscan, der inzwischen keinen einzigen CRITICAL-Befund mehr enthält (#768).
-
-### Reicht weiter
-
-Hebräisch und andere nichtlateinische Sprachen ([@dudyme](https://github.com/dudyme)). CJK-taugliche Tokenisierung für chinesische Quellen ([@An-idd](https://github.com/An-idd)). Eine Welle an Windows-Kompatibilität. Cookie-Extraktion für die gesamte Chromium-Familie – Brave, Edge, Vivaldi, Opera, Arc ([@andrey-esipov](https://github.com/andrey-esipov)) – plus macOS Keychain und pass(1) unter Linux als Quellen für Zugangsdaten. Historischer Rückblick mit `--as-of` ([@chiyi-creator](https://github.com/chiyi-creator)). Automatisch bereitgestelltes Python 3.12 über uv ([@buntysomroy](https://github.com/buntysomroy)). `--hiring-signals` zum Auslesen der Stellenseiten eines Unternehmens. Watchlist-Deltas zwischen zwei Durchläufen.
-
-### Weiterhin ab Werk dabei seit v3
-
-Die Grundlagen aus v3 sind alle noch da: das Pre-Research-Hirn, das die richtigen Handles, Subreddits und Hashtags ermittelt, bevor ein einziger API-Aufruf rausgeht (gebaut von [@j-sperling](https://github.com/j-sperling)); die Best-Takes-Wertung, die Humor und Viralität neben Relevanz berücksichtigt; quellenübergreifendes Cluster-Merging; Vergleiche in einem Durchgang („CLI vs MCP“ in 3 Minuten statt 12); automatisch gefundene `--competitors`-Vergleiche; der GitHub-Personenmodus (`--github-user=steipete`); der ELI5-Modus („eli5 on“ nach jedem Durchlauf); und teilbare, in sich geschlossene HTML-Briefings (`--emit=html`). Die Konfigurationsschalter stehen in [CONFIGURATION.md](CONFIGURATION.md).
+Dieses README beschreibt den aktuellen Quellcode; deine installierte Version kann davon abweichen.
 
 ## Installation
 
@@ -177,6 +152,10 @@ Wenn du lieber den Agent-Skills-Installationsweg unter Claude Code nutzt, wird a
 npx skills add mvanhorn/last30days-skill -g -a claude-code
 ```
 
+### Schnell-Testlink
+
+[Last30Days Research Skill in Telegram oder WhatsApp ausprobieren](https://app.clawmama.run/skills/2ne05f/hermes?utm_source=github&utm_medium=issue&utm_campaign=skill_outreach_mvanhorn_last30days_skill)
+
 Das native Plugin und die `npx skills`-Installation können nebeneinander existieren. Beachte aber: Claude Code dedupliziert nicht über Installationsmethoden hinweg. Wenn sowohl das Marketplace-Plugin als auch die `npx skills`-Kopie aktiv sind, taucht `/last30days` doppelt auf. Nutze pro Rechner eine Installationsmethode.
 
 ### Grok (xAI Build CLI)
@@ -194,7 +173,7 @@ grok plugin marketplace add mvanhorn/last30days-skill
 grok plugin install last30days
 ```
 
-Mit `--trust` überspringst du die Installationsbestätigung. Aktualisieren kannst du mit `grok plugin update last30days`. Grok liest aus Kompatibilitätsgründen auch die Claude-Code-Manifeste; das native `.grok-plugin/`-Paar ist der bevorzugte Weg – und genau darauf verweist ein offizieller Eintrag im [xAI-Marketplace](https://github.com/xai-org/plugin-marketplace). `npx skills add` bleibt ein gültiger Fallback über alle Hosts hinweg.
+Mit `--trust` überspringst du die Installationsbestätigung. Aktualisieren kannst du mit `grok plugin update last30days`. Grok liest aus Kompatibilitätsgründen auch die Claude-Code-Manifeste; das native `.grok-plugin/`-Paar ist der bevorzugte Weg – und genau darauf verweist ein offizieller Eintrag im [xAI-Marketplace](https://github.com/xai-org/plugin-marketplace). `npx skills add` bleibt ein gültiger Fallback über alle Hosts hinweg. Auf Grok Bot funktioniert X sofort über die eingebauten X-Tools des Bots, danach über den X-Connector des Bots, mit der offiziellen X-API (`X_BEARER_TOKEN`) als Fallback.
 
 ### Codex, Cursor, Copilot, Gemini CLI und weitere Agent-Skills-Hosts
 
@@ -206,7 +185,7 @@ npx skills add mvanhorn/last30days-skill -g
 
 Das Flag `-g` (global) installiert in dein Benutzerverzeichnis, sodass die Skill in allen Projekten verfügbar ist. Ohne `-g` installiert `npx skills` projektlokal nach `./.skills/` (und wird mit dem Repository eingecheckt). Für ein Werkzeug, mit dem du die ganze Welt recherchierst, willst du die globale Installation.
 
-Codex Desktop und andere Hosts, die auf Ordnerebene arbeiten, funktionieren sowohl in gewöhnlichen Ordnern als auch in Git-Repositories. Bitte den Host-Agenten vor der ersten Recherche, das mitgelieferte `scripts/last30days.py --preflight` aus dem geladenen Skill-Verzeichnis auszuführen; in einem Checkout des Quellcodes lautet der entsprechende Befehl `python3 skills/last30days/scripts/last30days.py --preflight`. Er zeigt dir, woher die Konfiguration stammt, welche Browser-Cookies gelesen würden, welche Dateien geschrieben würden, welche optionalen Befehle es gibt und welche Projektkonfiguration ignoriert wird – ohne Cookies zu lesen, Dateien zu schreiben oder eine Recherche zu starten.
+Codex Desktop und andere Hosts, die auf Ordnerebene arbeiten, funktionieren sowohl in gewöhnlichen Ordnern als auch in Git-Repositories. Um zu prüfen, was ein Lauf lesen und schreiben würde, ohne eine Recherche zu starten, führe das mitgelieferte `scripts/last30days.py --preflight` aus dem geladenen Skill-Verzeichnis aus; in einem Checkout des Quellcodes lautet der entsprechende Befehl `python3 skills/last30days/scripts/last30days.py --preflight`. Er zeigt dir, woher die Konfiguration stammt, welche Browser-Cookies gelesen würden, welche Dateien geschrieben würden, welche optionalen Befehle es gibt und welche Projektkonfiguration ignoriert wird – ohne Cookies zu lesen, Dateien zu schreiben oder eine Recherche zu starten. Die Ersteinrichtung braucht das nicht.
 
 Standardmäßig wird für den Host installiert, den `npx skills` erkennt. Um gezielt einen (oder mehrere) anzusprechen:
 
@@ -289,13 +268,13 @@ Diese Plattformen haben nichts miteinander zu tun. X weiß nicht, was Reddit den
 |---------|---------------|------|
 | Reddit (mit Kommentaren) + HN + Polymarket + GitHub + StockTwits | Nichts | Kostenlos |
 | arXiv + Techmeme | Kostenlose CLIs, die das Erst-Setup automatisch installiert | Kostenlos |
-| X / Twitter | In einem beliebigen Browser bei x.com anmelden, oder `XQUIK_API_KEY` / `XAI_API_KEY` setzen | Browser-Cookies sind kostenlos; Schlüssel hängen vom Anbieter ab |
+| X / Twitter | `X_BEARER_TOKEN` für die offizielle X-API setzen (aktuelle Posts, etwa die letzte Woche, sofern dein X-Entwicklerprojekt keinen Vollarchiv-Zugang hat; auf Grok Bot ein Fallback nach den eingebauten X-Tools des Bots, anderswo per Opt-in mit `LAST30DAYS_X_BACKEND=xapi`), oder in einem beliebigen Browser bei x.com anmelden, oder `XQUIK_API_KEY` / `XAI_API_KEY` setzen | X-API-Guthaben stammt aus deinem X-Entwicklerprojekt; Browser-Cookies sind kostenlos; andere Schlüssel hängen vom Anbieter ab |
 | YouTube | `brew install yt-dlp` | Kostenlos |
 | Bluesky | App-Passwort von bsky.app | Kostenlos |
 | TikTok + Instagram + Threads + Pinterest + LinkedIn + YouTube-Kommentare | Ein ScrapeCreators-Schlüssel | 10.000 kostenlose Aufrufe, danach nutzungsabhängig |
 | Xiaohongshu (RED) | Ein eingeloggtes x-mcp-Browser-Plugin oder einen `xiaohongshu-mcp`-Dienst laufen lassen und die Quelle mit `--search xhs` pro Durchlauf oder `INCLUDE_SOURCES=xiaohongshu` in `.env` zuschalten; last30days probiert automatisch `http://localhost:18060` und danach `http://host.docker.internal:18060`, oder du setzt `XIAOHONGSHU_API_BASE` für eine eigene URL | Kein last30days-API-Schlüssel nötig; hängt von deinem lokalen Browser-Session-Dienst ab |
 | DripStack (Premium-Finanznewsletter) | Zuschaltbar: `--search dripstack` pro Durchlauf, oder `INCLUDE_SOURCES=dripstack` in `.env` | Kein Schlüssel; kostenlose öffentliche Such-API |
-| Perplexity Sonar / Search API / Deep Research | Ein Perplexity-Schlüssel, oder ein OpenRouter-Schlüssel als Sonar-Fallback | Nutzungsabhängig |
+| Perplexity Agent API / Search API / Deep Research | Ein Perplexity-Schlüssel, oder ein OpenRouter-Schlüssel als Sonar-Fallback | Nutzungsabhängig; ein direkter Schlüssel aktiviert Agent API und Deep Research im Hintergrund |
 | Websuche | Ein Brave-Search-Schlüssel | 2.000 kostenlose Anfragen pro Monat |
 
 ### macOS Keychain (optional)
@@ -324,7 +303,7 @@ Die vollständige Schlüsselmatrix pro Quelle, die Priorität der Reasoning-Anbi
 
 Zwei Dinge, die du vermutlich schon am ersten Tag wissen willst:
 
-**Wo die Rechercheergebnisse landen.** `LAST30DAYS_MEMORY_DIR` zeigt standardmäßig auf `~/Documents/Last30Days/` (unter Windows: `C:\Users\<you>\Documents\Last30Days\`). Überschreib das, indem du die Umgebungsvariable in deiner Shell auf einen beliebigen Pfad setzt, oder mit `--save-dir <path>` pro Durchlauf. Nutze `--output <file>`, wenn du das gerenderte Ergebnis an einem exakten Pfad brauchst – im Format, das `--emit` vorgibt. Mit `--save-suffix=<name>` hältst du mehrere Varianten desselben Themas auseinander (etwa pro Kunde). Jeder Durchlauf mit `--save-dir` erzeugt `<slug>-raw[-suffix].md`. Mit `python3 skills/last30days/scripts/last30days.py --preflight` siehst du vor einer Recherche, welche Dateien geschrieben würden.
+**Wo die Rechercheergebnisse landen.** `LAST30DAYS_MEMORY_DIR` zeigt standardmäßig auf `~/Documents/Last30Days/` (unter Windows: `C:\Users\<you>\Documents\Last30Days\`). Überschreib das, indem du die Umgebungsvariable in deiner Shell auf einen beliebigen Pfad setzt, oder mit `--save-dir <path>` pro Durchlauf. Nutze `--output <file>`, wenn du das gerenderte Ergebnis an einem exakten Pfad brauchst – im Format, das `--emit` vorgibt. Mit `--save-suffix=<name>` hältst du mehrere Varianten desselben Themas auseinander (etwa pro Kunde). Jeder Durchlauf mit `--save-dir` erzeugt `<slug>-raw[-suffix].md`. Optional zeigt `python3 skills/last30days/scripts/last30days.py --preflight`, welche Dateien geschrieben würden, ohne eine Recherche zu starten.
 
 **Strukturierte Ausgabe für Agenten und Workflows.** Bitte `/last30days` um maschinenlesbares JSON, dann bekommst du das stabile, versionierte Agentenprofil. Für den direkten Einsatz der Engine in Skripten oder in der Entwicklung führst du `python3 skills/last30days/scripts/last30days.py "AI coding agents" --emit=json` aus; `--json-profile=raw` brauchst du nur, wenn du den unversionierten internen `Report`-Dump willst. Siehe die [Feldreferenz des JSON-Exports samt Versionierungsrichtlinie](docs/reference/json-export.md).
 
@@ -362,19 +341,29 @@ Du hast mit last30days ein wiederkehrendes KI-Update, eine Marktbeobachtung oder
 
 ## Open Source
 
-MIT-Lizenz. Kein Tracking. Keine Analytics. Deine Recherche bleibt auf deinem Rechner. Über 2.700 Tests.
+MIT-Lizenz. Kein Tracking. Keine Analytics. Deine Recherche bleibt auf deinem Rechner (siehe Datenschutzhinweise unten).
+
+Die Testbefehle stehen in [CONTRIBUTING.md](CONTRIBUTING.md#tests).
 
 Gebaut mit Python 3.12+, yt-dlp, Node.js (mitgelieferter Bird-Client für die X-Suche) und der ScrapeCreators-API. Architektur der v3-Engine von [@j-sperling](https://github.com/j-sperling).
 
 Wie du einen PR aufmachst, steht in [CONTRIBUTING.md](CONTRIBUTING.md), die vollständige Liste der Community-Beitragenden in [CONTRIBUTORS.md](CONTRIBUTORS.md) und die Versionshistorie in [CHANGELOG.md](CHANGELOG.md).
 
+## Datenschutzhinweise
+
+Standardmäßig läuft das Tool vollständig auf deinem Rechner — keine Daten verlassen dein Gerät, außer an die von dir genutzten Such-APIs (Reddit, ScrapeCreators usw.).
+
+**Reranking.** Wenn du einen Reasoning-Provider konfigurierst (`OPENAI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY` oder `GOOGLE_GENAI_API_KEY`), sendet die Engine dein Recherchethema und abgerufene Inhaltsausschnitte an diesen Provider zum Relevanz-Scoring. Das ist optional: Ohne Reasoning-Key verwendet die Engine ein lokales Scoring-Modell; für das Reranking erfolgen keine externen Aufrufe.
+
+**Lokaler Speicher.** Mit `LAST30DAYS_STORE=1` werden Ergebnisse in einer lokalen SQLite-Datenbank namens `research.db` im verwendeten Speicherverzeichnis gespeichert (`--save-dir` hat Vorrang vor `LAST30DAYS_MEMORY_DIR`). Wenn kein Speicherverzeichnis verwendet wird, liegt die Datenbank unter `~/.local/share/last30days/research.db`. Das Aktivieren des Speichers lädt die Datenbank nicht zu einem Remote-Dienst hoch. Einzelheiten zur Aufbewahrung und zum Löschen findest du in [CONFIGURATION.md](CONFIGURATION.md#--store-flag), einschließlich des vorherigen Beendens aller Prozesse, die die Datenbank verwenden.
+
 ## Sternverlauf
 
-<a href="https://star-history.com/#mvanhorn/last30days-skill&Date">
+<a href="https://star-history.dera.page/#mvanhorn/last30days-skill&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=mvanhorn/last30days-skill&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=mvanhorn/last30days-skill&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=mvanhorn/last30days-skill&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=mvanhorn/last30days-skill&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=mvanhorn/last30days-skill&type=Date" />
+    <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=mvanhorn/last30days-skill&type=Date" />
   </picture>
 </a>
 
